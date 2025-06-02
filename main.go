@@ -117,14 +117,14 @@ func main() {
 
 	// Initialize event recorder.
 	record.InitFromRecorder(mgr.GetEventRecorderFor("kk-controller"))
-
+	recoverPanic := true
 	if err = (&controllers.KKClusterReconciler{
 		Client:           mgr.GetClient(),
 		Recorder:         mgr.GetEventRecorderFor("kkcluster-controller"),
 		Scheme:           mgr.GetScheme(),
 		WatchFilterValue: watchFilterValue,
 		DataDir:          dataDir,
-	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: kkClusterConcurrency, RecoverPanic: true}); err != nil {
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: kkClusterConcurrency, RecoverPanic: &recoverPanic}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KKCluster")
 		os.Exit(1)
 	}
@@ -135,7 +135,7 @@ func main() {
 		Tracker:          tracker,
 		WatchFilterValue: watchFilterValue,
 		DataDir:          dataDir,
-	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: kkMachineConcurrency, RecoverPanic: true}); err != nil {
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: kkMachineConcurrency, RecoverPanic: &recoverPanic}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KKMachine")
 		os.Exit(1)
 	}
@@ -146,7 +146,7 @@ func main() {
 		Tracker:          tracker,
 		WatchFilterValue: watchFilterValue,
 		DataDir:          dataDir,
-	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: kkInstanceConcurrency, RecoverPanic: true}); err != nil {
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: kkInstanceConcurrency, RecoverPanic: &recoverPanic}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "KKInstance")
 		os.Exit(1)
 	}

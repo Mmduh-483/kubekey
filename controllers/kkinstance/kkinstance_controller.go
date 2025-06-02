@@ -474,7 +474,7 @@ func (r *Reconciler) requeueKKInstancesForUnpausedCluster(log logr.Logger) handl
 }
 
 func (r *Reconciler) requestsForCluster(log logr.Logger, namespace, name string) []ctrl.Request {
-	labels := map[string]string{clusterv1.ClusterLabelName: name}
+	labels := map[string]string{clusterv1.ClusterNameLabel: name}
 	kkMachineList := &infrav1.KKMachineList{}
 	if err := r.Client.List(context.TODO(), kkMachineList, client.InNamespace(namespace), client.MatchingLabels(labels)); err != nil {
 		log.Error(err, "Failed to get owned Machines, skipping mapping.")
