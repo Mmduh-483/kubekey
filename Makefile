@@ -1,7 +1,7 @@
 # Ensure Make is run with bash shell as some syntax below is bash-specific
 SHELL:=/usr/bin/env bash
 
-.DEFAULT_GOAL:=help
+.DEFAULT_GOAL:=h22
 
 #
 # Go.

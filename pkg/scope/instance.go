@@ -161,7 +161,7 @@ func (i *InstanceScope) InPlaceUpgradeVersion() string {
 
 // IsControlPlane returns whether the KKInstance is a control plane node.
 func (i *InstanceScope) IsControlPlane() bool {
-	if _, ok := i.Machine.GetLabels()[clusterv1.MachineControlPlaneLabelName]; ok {
+	if _, ok := i.Machine.GetLabels()[clusterv1.MachineControlPlaneLabel]; ok {
 		return true
 	}
 	return false
