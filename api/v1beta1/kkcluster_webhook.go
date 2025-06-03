@@ -33,6 +33,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 const (
@@ -121,7 +122,7 @@ func defaultInPlaceUpgradeAnnotation(annotation map[string]string) {
 var _ webhook.Validator = &KKCluster{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (k *KKCluster) ValidateCreate() error {
+func (k *KKCluster) ValidateCreate() (admission.Warnings, error) {
 	kkclusterlog.Info("validate create", "name", k.Name)
 
 	var allErrs field.ErrorList
@@ -129,17 +130,17 @@ func (k *KKCluster) ValidateCreate() error {
 	allErrs = append(allErrs, validateClusterNodes(k.Spec.Nodes)...)
 	allErrs = append(allErrs, validateLoadBalancer(k.Spec.ControlPlaneLoadBalancer)...)
 
-	return aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
+	return nil, aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (k *KKCluster) ValidateUpdate(old runtime.Object) error {
+func (k *KKCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	kkclusterlog.Info("validate update", "name", k.Name)
 
 	var allErrs field.ErrorList
 	oldC, ok := old.(*KKCluster)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected an KKCluster but got a %T", old))
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected an KKCluster but got a %T", old))
 	}
 
 	newLoadBalancer := &KKLoadBalancerSpec{}
@@ -161,12 +162,12 @@ func (k *KKCluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateClusterNodes(k.Spec.Nodes)...)
 	allErrs = append(allErrs, validateInPlaceUpgrade(k.GetAnnotations())...)
-	return aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
+	return nil, aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (k *KKCluster) ValidateDelete() error {
-	return nil
+func (k *KKCluster) ValidateDelete() (admission.Warnings, error) {
+	return nil, nil
 }
 
 func validateDistribution(spec KKClusterSpec) []*field.Error {

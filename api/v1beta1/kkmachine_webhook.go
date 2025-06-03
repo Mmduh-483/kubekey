@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,26 +89,26 @@ func defaultContainerManager(spec *KKMachineSpec) {
 var _ webhook.Validator = &KKMachine{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (k *KKMachine) ValidateCreate() error {
+func (k *KKMachine) ValidateCreate() (admission.Warnings, error) {
 	kkmachinelog.Info("validate create", "name", k.Name)
 
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateRepository(k.Spec.Repository)...)
-	return aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
+	return nil, aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (k *KKMachine) ValidateUpdate(old runtime.Object) error {
+func (k *KKMachine) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	kkmachinelog.Info("validate update", "name", k.Name)
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateRepository(k.Spec.Repository)...)
-	return aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
+	return nil, aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (k *KKMachine) ValidateDelete() error {
+func (k *KKMachine) ValidateDelete() (admission.Warnings, error) {
 	kkmachinelog.Info("validate delete", "name", k.Name)
-	return nil
+	return nil, nil
 }
 
 func validateRepository(repo *Repository) field.ErrorList { //nolint:unparam
