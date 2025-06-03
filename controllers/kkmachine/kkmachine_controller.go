@@ -79,11 +79,11 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		WithOptions(options).
 		For(&infrav1.KKMachine{}).
 		Watches(
-			&source.Kind{Type: &clusterv1.Machine{}},
+			&clusterv1.Machine{},
 			handler.EnqueueRequestsFromMapFunc(cutil.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("KKMachine"))),
 		).
 		Watches(
-			&source.Kind{Type: &infrav1.KKCluster{}},
+			&infrav1.KKCluster{},
 			handler.EnqueueRequestsFromMapFunc(r.KKClusterToKKMachines(log)),
 		).
 		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(log, r.WatchFilterValue)).
@@ -102,7 +102,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 
 	requeueKKMachinesForUnpausedCluster := r.requeueKKMachinesForUnpausedCluster(log)
 	return c.Watch(
-		&source.Kind{Type: &clusterv1.Cluster{}},
+		source.Kind(mgr.GetCache(), &clusterv1.Cluster{}),
 		handler.EnqueueRequestsFromMapFunc(requeueKKMachinesForUnpausedCluster),
 		predicates.ClusterUnpausedAndInfrastructureReady(log),
 	)
@@ -417,7 +417,7 @@ func (r *Reconciler) indexKKMachineByInstanceID(o client.Object) []string {
 // KKClusterToKKMachines is a handler.ToRequestsFunc to be used to enqeue requests for reconciliation
 // of KKMachines.
 func (r *Reconciler) KKClusterToKKMachines(log logr.Logger) handler.MapFunc {
-	return func(o client.Object) []ctrl.Request {
+	return func(ctx context.Context, o client.Object) []ctrl.Request {
 		c, ok := o.(*infrav1.KKCluster)
 		if !ok {
 			panic(fmt.Sprintf("Expected a KKCluster but got a %T", o))
@@ -446,7 +446,7 @@ func (r *Reconciler) KKClusterToKKMachines(log logr.Logger) handler.MapFunc {
 }
 
 func (r *Reconciler) requeueKKMachinesForUnpausedCluster(log logr.Logger) handler.MapFunc {
-	return func(o client.Object) []ctrl.Request {
+	return func(ctx context.Context, o client.Object) []ctrl.Request {
 		c, ok := o.(*clusterv1.Cluster)
 		if !ok {
 			panic(fmt.Sprintf("Expected a Cluster but got a %T", o))

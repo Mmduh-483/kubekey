@@ -58,7 +58,8 @@ func (d *Debian) Install(pkg ...string) error {
 	if len(pkg) == 0 {
 		pkg = []string{"socat", "conntrack", "ipset", "ebtables", "chrony", "ipvsadm"}
 	}
-	if _, err := d.SSHClient.SudoCmdf("apt install -y %s", strings.Join(pkg, " ")); err != nil {
+
+	if _, err := d.SSHClient.SudoCmdf("NEEDRESTART_MODE=a apt install -y %s", strings.Join(pkg, " ")); err != nil {
 		return err
 	}
 	return nil

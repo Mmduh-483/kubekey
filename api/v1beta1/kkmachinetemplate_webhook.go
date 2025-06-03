@@ -22,6 +22,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
@@ -49,28 +50,28 @@ func (k *KKMachineTemplate) Default() {
 var _ webhook.Validator = &KKMachineTemplate{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (k *KKMachineTemplate) ValidateCreate() error {
+func (k *KKMachineTemplate) ValidateCreate() (admission.Warnings, error) {
 	kkmachinetemplatelog.Info("validate create", "name", k.Name)
 
 	spec := k.Spec.Template.Spec
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateRepository(spec.Repository)...)
-	return aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
+	return nil, aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (k *KKMachineTemplate) ValidateUpdate(old runtime.Object) error {
+func (k *KKMachineTemplate) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	kkmachinetemplatelog.Info("validate update", "name", k.Name)
 
 	spec := k.Spec.Template.Spec
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateRepository(spec.Repository)...)
-	return aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
+	return nil, aggregateObjErrors(k.GroupVersionKind().GroupKind(), k.Name, allErrs)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (k *KKMachineTemplate) ValidateDelete() error {
+func (k *KKMachineTemplate) ValidateDelete() (admission.Warnings, error) {
 	kkmachinetemplatelog.Info("validate delete", "name", k.Name)
 
-	return nil
+	return nil, nil
 }
