@@ -30,7 +30,6 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/pointer"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/noderefutil"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	capierrors "sigs.k8s.io/cluster-api/errors"
 	cutil "sigs.k8s.io/cluster-api/util"
@@ -319,7 +318,7 @@ func (r *Reconciler) reconcileNormal(ctx context.Context, machineScope *scope.Ma
 
 	// Proceed to reconcile the KKMachine state.
 	if existingInstanceState == nil || *existingInstanceState != instance.Status.State {
-		machineScope.Info("KubeKey instance state changed", "state", instance.Status.State, "instance-id", *machineScope.GetInstanceID())
+		machineScope.Info("KubeKey instance state changed", "state", instance.Status.State, "instance-id", machineScope.GetProviderID())
 	}
 
 	switch instance.Status.State {
@@ -361,7 +360,7 @@ func (r *Reconciler) reconcileNormal(ctx context.Context, machineScope *scope.Ma
 		return ctrl.Result{RequeueAfter: 15 * time.Second}, nil
 	default:
 		machineScope.SetNotReady()
-		machineScope.Info("KubeKey instance state is undefined", "state", instance.Status.State, "instance-id", *machineScope.GetInstanceID())
+		machineScope.Info("KubeKey instance state is undefined", "state", instance.Status.State, "instance-id", machineScope.GetProviderID())
 		r.Recorder.Eventf(machineScope.KKMachine, corev1.EventTypeWarning, "InstanceUnhandledState", "KubeKey instance state is undefined")
 		machineScope.SetFailureReason(capierrors.UpdateMachineError)
 		machineScope.SetFailureMessage(errors.Errorf("KubeKey instance state %q is undefined", instance.Status.State))
@@ -377,18 +376,14 @@ func (r *Reconciler) findInstance(ctx context.Context, machineScope *scope.Machi
 	kkInstance := &infrav1.KKInstance{}
 
 	// Parse the ProviderID.
-	pid, err := noderefutil.NewProviderID(machineScope.GetProviderID())
-	if err != nil {
-		if errors.Is(err, noderefutil.ErrEmptyProviderID) {
-			machineScope.Info("KKMachine does not have an instance id")
-			return nil, nil
-		}
-		return nil, errors.Wrapf(err, "failed to parse Spec.ProviderID")
+	machineScope.V(4).Info("KKMachine has an instance id", "instance-id", machineScope.GetProviderID())
+	// If the ProviderID is populated, describe the instance using the ID.
+	if machineScope.GetProviderID() == "" {
+		machineScope.Info("KKMachine does not have an instance id")
+		return nil, nil
 	}
 
-	machineScope.V(4).Info("KKMachine has an instance id", "instance-id", pid.ID())
-	// If the ProviderID is populated, describe the instance using the ID.
-	id := pointer.String(pid.ID())
+	id := pointer.String(machineScope.GetProviderID())
 
 	obj := client.ObjectKey{
 		Namespace: machineScope.KKMachine.Namespace,

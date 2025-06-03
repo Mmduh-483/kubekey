@@ -18,12 +18,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
-	"math/rand"
-	"os"
-	"time"
-
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -32,12 +29,15 @@ import (
 	"k8s.io/client-go/tools/leaderelection/resourcelock"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
+	"os"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/util/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	infrav1 "github.com/kubesphere/kubekey/v3/api/v1beta1"
 	"github.com/kubesphere/kubekey/v3/controllers"
@@ -66,36 +66,48 @@ var (
 	kkClusterConcurrency    int
 	kkInstanceConcurrency   int
 	kkMachineConcurrency    int
-	syncPeriod              time.Duration
-	watchNamespace          string
 	dataDir                 string
 )
 
 func main() {
-	klog.InitFlags(nil)
+	var tlsOpts []func(*tls.Config)
 
-	rand.Seed(time.Now().UnixNano())
+	klog.InitFlags(nil)
 	initFlags(pflag.CommandLine)
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
 	ctrl.SetLogger(klogr.New())
-
 	ctx := ctrl.SetupSignalHandler()
+
+	disableHTTP2 := func(c *tls.Config) {
+		setupLog.Info("disabling http/2")
+		c.NextProtos = []string{"http/1.1"}
+	}
+
+	tlsOpts = append(tlsOpts, disableHTTP2)
+
+	webhookServer := webhook.NewServer(webhook.Options{
+		TLSOpts: tlsOpts,
+		Port:    9443,
+	})
+
+	metricsServerOptions := metricsserver.Options{
+		BindAddress: metricsAddr,
+		TLSOpts:     tlsOpts,
+	}
 
 	restConfig := ctrl.GetConfigOrDie()
 	restConfig.UserAgent = "cluster-api-provider-kk-controller"
 	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                     scheme,
-		MetricsBindAddress:         metricsAddr,
+		Metrics:                    metricsServerOptions,
+		WebhookServer:              webhookServer,
+		HealthProbeBindAddress:     healthAddr,
 		LeaderElection:             enableLeaderElection,
 		LeaderElectionID:           "controller-leader-election-capkk",
 		LeaderElectionResourceLock: resourcelock.LeasesResourceLock,
 		LeaderElectionNamespace:    leaderElectionNamespace,
-		SyncPeriod:                 &syncPeriod,
-		Namespace:                  watchNamespace,
-		Port:                       9443,
-		HealthProbeBindAddress:     healthAddr,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -106,8 +118,7 @@ func main() {
 	tracker, err := remote.NewClusterCacheTracker(
 		mgr,
 		remote.ClusterCacheTrackerOptions{
-			Log:     &log,
-			Indexes: remote.DefaultIndexes,
+			Log: &log,
 		},
 	)
 	if err != nil {
@@ -205,23 +216,10 @@ func initFlags(fs *pflag.FlagSet) {
 	)
 
 	fs.StringVar(
-		&watchNamespace,
-		"namespace",
-		"",
-		"Namespace that the controller watches to reconcile cluster-api objects. If unspecified, the controller watches for cluster-api objects across all namespaces.",
-	)
-
-	fs.StringVar(
 		&leaderElectionNamespace,
 		"leader-elect-namespace",
 		"",
 		"Namespace that the controller performs leader election in. If unspecified, the controller will discover which namespace it is running in.",
-	)
-
-	fs.DurationVar(&syncPeriod,
-		"sync-period",
-		10*time.Minute,
-		"The minimum interval at which watched resources are reconciled.",
 	)
 
 	fs.IntVar(&kkClusterConcurrency,

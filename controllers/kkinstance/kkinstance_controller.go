@@ -372,12 +372,13 @@ func (r *Reconciler) reconcileNormal(ctx context.Context, instanceScope *scope.I
 
 	phases := r.phaseFactory(kkInstanceScope)
 	for _, phase := range phases {
-		pollErr := wait.PollImmediate(r.WaitKKInstanceInterval, r.WaitKKInstanceTimeout, func() (done bool, err error) {
+		pollErr := wait.PollUntilContextTimeout(ctx, r.WaitKKInstanceInterval, r.WaitKKInstanceTimeout, true, func(ctx context.Context) (done bool, err error) {
 			if err := phase(ctx, sshClient, instanceScope, kkInstanceScope, lbScope); err != nil {
 				return false, err
 			}
 			return true, nil
 		})
+
 		if pollErr != nil {
 			instanceScope.Error(pollErr, "failed to reconcile phase")
 			return ctrl.Result{RequeueAfter: defaultRequeueWait}, pollErr

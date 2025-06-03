@@ -86,8 +86,6 @@ linters-settings:
       - pkg: sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1
         alias: controlplanev1
       # CAPI
-      - pkg: sigs.k8s.io/cluster-api/api/v1alpha3
-        alias: clusterv1alpha3
       - pkg: sigs.k8s.io/cluster-api/api/v1alpha4
         alias: clusterv1alpha4
       - pkg: sigs.k8s.io/cluster-api/api/v1beta1

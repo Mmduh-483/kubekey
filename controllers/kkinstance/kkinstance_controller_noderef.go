@@ -22,10 +22,8 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/api/v1beta1/index"
-	"sigs.k8s.io/cluster-api/controllers/noderefutil"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/conditions"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,11 +46,7 @@ func (r *Reconciler) reconcileNode(ctx context.Context, instanceScope *scope.Ins
 		return ctrl.Result{}, nil
 	}
 
-	providerID, err := noderefutil.NewProviderID(*kkMachine.Spec.ProviderID)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
+	providerID := *kkMachine.Spec.ProviderID
 	cluster := instanceScope.Cluster
 	remoteClient, err := r.Tracker.GetClient(ctx, util.ObjectKey(cluster))
 	if err != nil {
@@ -149,12 +143,12 @@ func summarizeNodeConditions(node *corev1.Node) (corev1.ConditionStatus, string)
 	return corev1.ConditionUnknown, message
 }
 
-func (r *Reconciler) getNode(ctx context.Context, c client.Reader, providerID *noderefutil.ProviderID) (*corev1.Node, error) {
-	log := ctrl.LoggerFrom(ctx, "providerID", providerID)
+func (r *Reconciler) getNode(ctx context.Context, c client.Reader, providerID string) (*corev1.Node, error) {
 	nodeList := corev1.NodeList{}
-	if err := c.List(ctx, &nodeList, client.MatchingFields{index.NodeProviderIDField: providerID.IndexKey()}); err != nil {
+	if err := c.List(ctx, &nodeList, client.MatchingFields{index.NodeProviderIDField: providerID}); err != nil {
 		return nil, err
 	}
+
 	if len(nodeList.Items) == 0 {
 		// If for whatever reason the index isn't registered or available, we fallback to loop over the whole list.
 		nl := corev1.NodeList{}
@@ -163,14 +157,8 @@ func (r *Reconciler) getNode(ctx context.Context, c client.Reader, providerID *n
 				return nil, err
 			}
 
-			for key, node := range nl.Items {
-				nodeProviderID, err := noderefutil.NewProviderID(node.Spec.ProviderID)
-				if err != nil {
-					log.Error(err, "Failed to parse ProviderID", "Node", klog.KRef("", nl.Items[key].GetName()))
-					continue
-				}
-
-				if providerID.Equals(nodeProviderID) {
+			for _, node := range nl.Items {
+				if node.Spec.ProviderID == providerID {
 					return &node, nil
 				}
 			}
@@ -184,7 +172,7 @@ func (r *Reconciler) getNode(ctx context.Context, c client.Reader, providerID *n
 	}
 
 	if len(nodeList.Items) != 1 {
-		return nil, fmt.Errorf("unexpectedly found more than one Node matching the providerID %s", providerID.String())
+		return nil, fmt.Errorf("unexpectedly found more than one Node matching the providerID %s", providerID)
 	}
 
 	return &nodeList.Items[0], nil
