@@ -29,7 +29,7 @@ import (
 const (
 	KubeadmName          = "kubeadm"
 	KubeadmID            = "kubeadm"
-	KubeadmURLPathTmpl   = "/kubernetes-release/release/%s/bin/linux/%s/kubeadm"
+	KubeadmURLPathTmpl   = "/release/%s/bin/linux/%s/kubeadm"
 	KubeadmURLPathTmplCN = "/release/%s/bin/linux/%s/kubeadm"
 )
 

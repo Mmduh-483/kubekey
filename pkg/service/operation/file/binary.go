@@ -37,7 +37,7 @@ import (
 const (
 	ZONE                        = "cn"
 	DefaultDownloadHost         = "https://github.com"
-	DefaultDownloadHostGoogle   = "https://storage.googleapis.com"
+	DefaultDownloadHostGoogle   = "https://cdn.dl.k8s.io"
 	DefaultDownloadHostQingStor = "https://kubernetes-release.pek3b.qingstor.com"
 )
 

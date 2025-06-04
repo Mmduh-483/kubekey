@@ -29,7 +29,7 @@ import (
 const (
 	KubectlName          = "kubectl"
 	KubectlID            = "kubectl"
-	KubectlURLPathTmpl   = "/kubernetes-release/release/%s/bin/linux/%s/kubectl"
+	KubectlURLPathTmpl   = "/release/%s/bin/linux/%s/kubectl"
 	KubectlURLPathTmplCN = "/release/%s/bin/linux/%s/kubectl"
 )
 
