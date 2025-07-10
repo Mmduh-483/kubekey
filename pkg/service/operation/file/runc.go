@@ -29,7 +29,7 @@ const (
 	RuncName           = "runc.%s"
 	RuncID             = "runc"
 	RuncURLPathTmpl    = "/opencontainers/runc/releases/download/%s/runc.%s"
-	RuncDefaultVersion = "v1.1.1"
+	RuncDefaultVersion = "v1.1.12"
 )
 
 // Runc is a Binary for runc.
