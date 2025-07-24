@@ -162,6 +162,13 @@ func (c *Client) authMethod(password, privateKey, privateKeyPath string) (auths 
 	}
 	if password != "" {
 		auths = append(auths, ssh.Password(password))
+		auths = append(auths, ssh.KeyboardInteractive(func(name, instruction string, questions []string, echos []bool) ([]string, error) {
+			if len(questions) == 0 {
+				return []string{}, nil
+			}
+
+			return []string{password}, nil
+		}))
 	}
 	return auths, nil
 }
