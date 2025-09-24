@@ -29,7 +29,7 @@ import (
 const (
 	KubeletName          = "kubelet"
 	KubeletID            = "kubelet"
-	KubeletURLPathTmpl   = "/release/%s/bin/linux/%s/kubelet"
+	KubeletURLPathTmpl   = "/%s/bin/linux/%s/kubelet"
 	KubeletURLPathTmplCN = "/release/%s/bin/linux/%s/kubelet"
 )
 
