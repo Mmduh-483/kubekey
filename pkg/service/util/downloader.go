@@ -17,6 +17,7 @@
 package util
 
 import (
+	"os"
 	"time"
 
 	"github.com/kubesphere/kubekey/v3/pkg/scope"
@@ -50,6 +51,8 @@ func DownloadAndCopy(instanceScope *scope.InstanceScope, b operation.Binary, zon
 			return err
 		}
 		if err := b.CompareChecksum(); err != nil {
+			// Remove cached failed downloaded filed
+			_ = os.Remove(b.LocalPath())
 			return err
 		}
 	}
