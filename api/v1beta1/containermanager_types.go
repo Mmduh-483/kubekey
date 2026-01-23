@@ -24,7 +24,7 @@ const (
 	DefaultDockerCRISocket   = "unix:///run/cri-dockerd.sock"
 
 	ContainerdType             = "containerd"
-	DefaultContainerdVersion   = "1.6.4"
+	DefaultContainerdVersion   = "1.7.28"
 	DefaultContainerdCRISocket = "unix:///var/run/containerd/containerd.sock"
 
 	DefaultCrictlVersion = "v1.24.0"
