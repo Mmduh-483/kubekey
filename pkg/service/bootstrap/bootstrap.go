@@ -208,6 +208,9 @@ func (s *Service) RemoveFiles() error {
 		"/tmp/kubekey",
 		"/etc/kubekey",
 		"/run/kubeadm/*",
+		"/var/lib/containerd/io.containerd.snapshotter.v1.overlayfs",
+		"/var/lib/containerd/io.containerd.content.v1.content",
+		"/var/lib/longhorn/replicas",
 	}
 	for _, dir := range removeDirs {
 		dirService := s.getDirectoryService(dir, 0)
